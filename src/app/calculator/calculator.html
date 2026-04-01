@@ -1,0 +1,25 @@
+<!-- これから、このファイルに電卓のUIを作成していきます。 -->
+<div class="calculator">
+    <input #calcDisplay type="text" [value]="display">
+    <div class="calculator-buttons">
+        <button>←</button>
+        <button>AC</button>
+        <button>C</button>
+        <button (click)="append('÷')">÷</button><br>
+        <button (click)="append('7')">7</button>
+        <button (click)="append('8')">8</button>
+        <button (click)="append('9')">9</button>
+        <button (click)="append('×')">×</button><br>
+        <button (click)="append('4')">4</button>
+        <button (click)="append('5')">5</button>
+        <button (click)="append('6')">6</button>
+        <button (click)="append('-')">-</button><br>
+        <button (click)="append('1')">1</button>
+        <button (click)="append('2')">2</button>
+        <button (click)="append('3')">3</button>
+        <button (click)="append('+')">+</button><br>
+        <button (click)="append('0')">0</button>
+        <button (click)="append('.')">.</button>
+        <button>=</button>
+    </div>
+</div>
