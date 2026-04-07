@@ -104,7 +104,7 @@ export class Calculator {
         switch (this.lastOperator) {
           case '+':
           case '-':
-            this.display = ((Number(this.lastNumber)) / 100).toString();
+            this.display = ((Number(this.display)) / 100 * Number(this.lastNumber)).toString();
             break;
           case '*':
           case '/':
