@@ -1,4 +1,92 @@
+.calculator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 350px;
+    height: 450px;
+    background-color: #000000;
+    border-radius: 3%;
+    margin: auto;
+}
+
+.display {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    height: 65px;
+    padding-top: 30px;
+    margin-bottom: 30px;
+}
+
+textarea {
+    text-align: right;
+    border: none;
+    font-size: 25px;
+    resize: none;
+    overflow: hidden;
+    width: 18px;
+}
+
+input {
+    text-align: right;
+    border: none;
+    font-size: 25px;
+    width: 270px;
+}
+
 button {
-    width: 30px;
-    height: 30px;
+    vertical-align: top;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.circleGray, .circleOrange, .square {
+    width: 40px;
+    height: 40px;
+    margin: 8px;
+}
+
+.circleGray {
+    background-color: #d1d1d1;
+    border-radius: 50%;
+    color: #333333;
+}
+
+.circleOrange {
+    background-color: #ee9851;
+    border-radius: 50%;
+    color: #333333;
+}
+
+.square {
+    background-color: #949292;
+    border-radius: 20%;
+    color: #ffffff;
+}
+
+.plus {
+    width: 40px;
+    height: 80px;
+    background-color: #d1d1d1;
+    border-radius: 50% / 15%;
+    color: #333333;
+    margin: 8px 8px -80px 8px;
+}
+
+.equal {
+    width: 150px;
+    height: 40px;
+    background-color: #d1d1d1;
+    border-radius: 10% / 50%;
+    color: #333333;
+    padding: 10px;
+    display: block;
+    margin: 8px auto;
+} 
+
+p {
+    color: #ff0000;
+    text-align: center;
 }
