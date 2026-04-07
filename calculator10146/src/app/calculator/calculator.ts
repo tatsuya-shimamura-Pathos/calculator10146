@@ -78,15 +78,16 @@ export class Calculator {
 
   validateCulcResult(): void {
     const integralDigits = this.display.split('.')[0].length;
-    const decimalDigits = this.display.split('.')[1]?.length
+    // const decimalDigits = this.display.split('.')[1]?.length
     if (integralDigits > 10) {
       this.plusMinus = "\nE";
       this.display = '0.';
       this.alert += `※整数部の桁数：${integralDigits}桁、桁数上限(10桁)超過`;
     }
-    if (decimalDigits > 8) {
-      this.display = Number(this.display).toFixed(8);
-    }
+    // if (decimalDigits > 8) {
+    //   // this.display = `${this.display.split('.')[0]}.${this.display.split('.')[1]?.slice(0, 8)}`;
+    //   this.display = Number(this.display).toFixed(8);
+    // }
   }
 
   setComma(): void {
@@ -238,7 +239,7 @@ export class Calculator {
   }
 
   calculate(functionName?: string): void {
-    if (this.display !== '') {
+    if (this.display !== '' && this.lastNumber !== '') {
       if (!functionName){
         const signedData: string = this.plusMinus + this.display;
         this.calcData.push(signedData);
