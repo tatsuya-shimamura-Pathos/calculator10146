@@ -20,9 +20,14 @@ export class Calculator {
   lastOperator: string = '';
   lastNumber: string = '';
   isOperatorInput: boolean = false;
+  plusMinusReset: boolean = true;
+  ratio: string = '';
+  operand: string = '';
+  isPercentOn: boolean = false;
+  isCancel: boolean = false;
 
   append(value: string): void {
-    if (this.display !== '') {
+    if (this.display !== '' && this.alert === '') {
       if (this.reset) {
         if (value !== '.') {
           this.alert = '';
@@ -48,6 +53,10 @@ export class Calculator {
                 this.display = value;
               }
           }
+          if (this.plusMinusReset) {
+            this.plusMinus = '';
+          }
+          this.plusMinusReset = false;
         } else {
           if (value === '.') {
             this.isPoint = true;
@@ -78,16 +87,14 @@ export class Calculator {
 
   validateCulcResult(): void {
     const integralDigits = this.display.split('.')[0].length;
-    // const decimalDigits = this.display.split('.')[1]?.length
+    const decimalDigits = this.display.split('.')[1]?.length
     if (integralDigits > 10) {
-      this.plusMinus = "\nE";
-      this.display = '0.';
-      this.alert += `※整数部の桁数：${integralDigits}桁、桁数上限(10桁)超過`;
+      this.doAlert(`※整数部の桁数：${integralDigits}桁、桁数上限(10桁)超過`);
     }
-    // if (decimalDigits > 8) {
-    //   // this.display = `${this.display.split('.')[0]}.${this.display.split('.')[1]?.slice(0, 8)}`;
-    //   this.display = Number(this.display).toFixed(8);
-    // }
+    if (decimalDigits > 8) {
+      this.display = `${this.display.split('.')[0]}.${this.display.split('.')[1]?.slice(0, 8)}`;
+      this.display = Number(this.display).toFixed(8);
+    }
   }
 
   setComma(): void {
@@ -96,15 +103,37 @@ export class Calculator {
     }
   }
 
-  percentCalc(): void{
+  percentCalc(): void{;
     if (this.display !== '') {
-      if (this.calcData.length === 0 || (this.calcData.length > 2 && this.result === 0)) {
-        this.display = '0.';
+      if (this.calcData.length === 0) {
+        if (this.lastOperator !== '') { // %連打のケース
+          switch (this.lastOperator) {
+            case '+':
+            case '-':
+              break;
+            case '*':
+              this.calcData.push(this.ratio, this.lastOperator);
+              this.calculate();
+              break;
+            default:  
+              this.calcData.push(this.display, this.lastOperator);
+              this.display = this.lastNumber;
+              this.calculate();
+              break;
+          }
+        } else { // 初回%のケース
+          this.display = '0.';
+        }
       } else {
         switch (this.lastOperator) {
           case '+':
           case '-':
-            this.display = ((Number(this.display)) / 100 * Number(this.lastNumber)).toString();
+            if (this.result !== 0) {
+              this.display = ((Number(this.display)) / 100 * Number(this.result)).toString();
+            }
+            if (this.result === 0) {
+              this.display = ((Number(this.display)) / 100 * Number(this.lastNumber)).toString();              
+            }
             break;
           case '*':
           case '/':
@@ -112,17 +141,25 @@ export class Calculator {
             break;
         }
         this.calculate();
+        this.ratio = (Number(this.display) / Number(this.lastNumber) / 100).toFixed(8)
       }
       this.isOperatorInput = false;
       this.isNumberInput = false;
       this.isEqual = false;
+      this.isPercentOn = true;
+      this.isCancel = false;
     }
   }
 
   rootCalc(): void {
     if (this.display !== '') {
+      if (this.plusMinus === '-') {
+        this.doAlert('※+/-ボタンによるマイナス数値の平方根は計算不可');
+      }
       this.display = Math.sqrt(Number(this.display)).toString();
       this.setComma();
+      this.validateCulcResult();
+      this.endZeroCut();
       this.reset = true;
       this.isOperatorInput = false;
       this.isNumberInput = false;
@@ -130,40 +167,83 @@ export class Calculator {
     }
   }
 
+  // clickOperator(operator: string): void {
+  //   if (this.display !== '' && this.alert === '') {
+  //     let signedData: string;
+  //     if (this.calcData.length === 0) {
+  //       signedData = this.plusMinus + this.display;
+  //       this.calcData.push(signedData, operator);
+  //       this.lastOperator = operator;
+  //       this.lastNumber = signedData;
+  //     } else {
+  //       if (this.isNumberInput) {
+  //         const signedData: string = this.plusMinus + this.display;
+  //         this.calcData.push(signedData, operator);
+  //         if (this.calcData.length > 2 && this.calcData.length % 2 === 0) {
+  //           this.calcData.pop();
+  //           this.calculate("clickOperator");
+  //           this.calcData.push(operator);
+  //         }
+  //       } else {
+  //         this.calcData[this.calcData.length - 1] = operator; // 直前の演算子を更新
+  //         this.lastOperator = operator;
+  //       }
+  //     }
+  //     if (operator === '*') {
+  //       this.multiplier = this.plusMinus + this.display;
+  //     }
+  //     this.reset = true;
+  //     this.isPoint = false;
+  //     this.isNumberInput = false;
+  //     this.isEqual = false;
+  //     this.isOperatorInput = true;
+  //   }
+  // }
+
+
   clickOperator(operator: string): void {
-    let signedData: string;
-    if (this.calcData.length === 0) {
-      signedData = this.plusMinus + this.display;
-      this.calcData.push(signedData, operator);
+    if (this.display !== '' && this.alert === '') {
+      let signedData: string;
       this.lastOperator = operator;
-      this.lastNumber = signedData;
-    } else {
-      if (this.isNumberInput) {
-        const signedData: string = this.plusMinus + this.display;
+      if (this.calcData.length === 0) {
+        signedData = this.plusMinus + this.display;
         this.calcData.push(signedData, operator);
-        if (this.calcData.length > 2 && this.calcData.length % 2 === 0) {
-          this.calcData.pop();
-          this.calculate("clickOperator");
-          this.calcData.push(operator);
-        }
+        this.lastNumber = signedData;
       } else {
-        this.calcData[this.calcData.length - 1] = operator; // 直前の演算子を更新
+        if (this.isNumberInput) {
+          const signedData: string = this.plusMinus + this.display;
+          this.lastNumber = signedData;
+          this.calcData.push(signedData, operator);
+          if (this.calcData.length > 2 && this.calcData.length % 2 === 0) {
+            this.calcData.pop(); //一度末尾の演算子を削除してcalculate()で計算する。
+            this.calculate("clickOperator");
+            this.calcData.push(operator);
+          }
+        } else {
+          this.calcData[this.calcData.length - 1] = operator; // 直前の演算子を更新
+        }
       }
+      if (operator === '*' || operator === '+' || operator === '-') {
+        this.operand = this.plusMinus + this.display;
+      }
+      this.reset = true;
+      this.isPoint = false;
+      this.isNumberInput = false;
+      this.isEqual = false;
+      this.isOperatorInput = true;
     }
-    this.reset = true;
-    this.isPoint = false;
-    this.isNumberInput = false;
-    this.isEqual = false;
-    this.isOperatorInput = true;
   }
 
   clear(): void {
     if (this.display !== '') {
       this.display = '0.';
-      this.plusMinus = '';
       this.isNumberInput = false;
       this.isEqual = false;
       this.isPoint = false;
+      this.isCancel = true;
+      if (this.alert === '') {
+        this.plusMinus = '';
+      }
     }
   }
 
@@ -180,10 +260,21 @@ export class Calculator {
     this.lastOperator = '';
     this.lastNumber = '';
     this.isOperatorInput = false;
+    this.plusMinusReset = true;
+    this.ratio = '';
+    this.operand = '';
+    this.isPercentOn = false;
+    this.isCancel = false;
+  }
+
+  doAlert(message: string): void {
+    this.clearAll();
+    this.alert = message;
+    this.plusMinus = '\nE';
   }
 
   appendPlusMinus(): void {
-    if (this.display !== '') {
+    if (this.display !== '' && this.alert === '') {
       if (this.plusMinus === '') {
         this.plusMinus = '-';
       } else {
@@ -239,25 +330,78 @@ export class Calculator {
   }
 
   calculate(functionName?: string): void {
-    if (this.display !== '' && this.lastNumber !== '') {
+    // if (this.display !== '' && this.lastNumber !== '' && this.alert === '' && !this.isCancel) {
+    if (this.display !== '' && this.lastNumber !== '' && this.alert === '') {      
       if (!functionName){
         const signedData: string = this.plusMinus + this.display;
         this.calcData.push(signedData);
       }
+      // +=, -=, *=, /=のケース（*=はここでは制御不要）
+      if (this.isOperatorInput) {
+        switch (this.calcData[this.calcData.length - 2]) {
+          case '+':
+            if (this.calcData.length < 5) {
+              this.calcData[0] = '0';
+            }
+            this.calcData[this.calcData.length - 1] = this.lastNumber;
+            this.lastNumber = this.display;
+            break;
+          case '-':
+            if (this.calcData.length < 5) {
+              this.calcData[0] = '0';
+            }
+            this.calcData[this.calcData.length -1] = this.lastNumber;
+            this.lastNumber = this.display;
+            break;
+          case '*':
+            this.lastNumber = this.calcData[this.calcData.length - 1];
+            break;
+          case '/':
+            this.calcData= ['1', '/', this.display]
+            break;
+          default:
+            break;
+        }
+      }
       this.calcDetail();
-      if (this.calcData.includes('/') && Number(this.calcData[this.calcData.length - 1]) === 0) {
-        this.alert = '※0除算';
-        this.display = '0.';
-        this.plusMinus = '\nE';
+      const index = this.calcData.indexOf('/');
+      if (index !== -1 && Number(this.calcData[index + 1]) === 0) {
+        this.doAlert('※0除算');
       } else {
-        if (this.isEqual) {
-          this.calcData.push(this.lastOperator, this.lastNumber);
+        if (this.isEqual || this.isPercentOn) {
+          if (this.lastOperator === '*' || this.lastOperator === '+' || this.lastOperator === '-') { //*=、+=、-=のケース
+            this.calcData.push(this.lastOperator, this.operand);
+          } else {
+            this.calcData.push(this.lastOperator, this.lastNumber);
+          }
           this.calcDetail();
         }
         this.convertingFromExponentialNotation();
         this.resultPlusMinusControl();
-        this.lastOperator = this.calcData[this.calcData.length - 2];
-        this.lastNumber = this.calcData[this.calcData.length - 1];
+        // this.lastOperator = this.calcData[this.calcData.length - 2];
+        if (!this.isOperatorInput) {
+          switch (this.lastOperator) {
+            case '+':
+            case '-':
+              this.lastNumber = this.calcData[this.calcData.length - 1];
+              break;
+          }
+        } else {
+            switch (this.lastOperator) {
+              case '-':
+                if (this.calcData.length >= 5) {
+                  if (this.plusMinus === '') {
+                    this.plusMinus = '-';
+                  } else {
+                    this.plusMinus = '';
+                  }
+                }           
+                break;
+              case '/':
+                this.lastNumber = this.calcData[this.calcData.length - 1];
+                break;
+            }
+          }
       }
       if (!functionName) {
         this.calcData = [];
@@ -268,5 +412,23 @@ export class Calculator {
       this.endZeroCut();
       this.validateCulcResult();
     }
+    if (!functionName) {
+      if (this.alert === '' && ((this.calcData.length === 0 && this.display === '0.'))) {
+        this.plusMinus = '';        
+      }
+      // if (this.isCancel) {
+      //   this.calcData.push('0.');
+      //   this.calcDetail();
+      //   const index = this.calcData.indexOf('/');
+      //   if (index !== -1 && Number(this.calcData[index + 1]) === 0) {
+      //     this.doAlert('※0除算');
+      //   }
+      // }
+      this.calcData = [];
+      this.reset = true;
+      this.isEqual = true;
+    }
+    this.endZeroCut();
+    this.isOperatorInput = false;
   }  
 }
